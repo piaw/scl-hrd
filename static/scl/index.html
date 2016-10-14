@@ -43,6 +43,14 @@ function fetchUser(email) {
      });
 }
 
+function fetchChecklist(checklistid, cb) {
+   var clref = database.ref('checklists').child(checklistid).once('value').then(
+      function(snapshot) {
+         var checklist = snapshot.val();
+         cb(checklist);
+      });
+}
+
 var provider = new firebase.auth.FacebookAuthProvider();
 provider.addScope('email');
 firebase.auth().signInWithPopup(provider).then(function(result) {
@@ -78,6 +86,12 @@ function sleep (time) {
 
 // Usage!
 sleep(5000).then(() => {
+for (var i = 0; i < muser.checklists.length; i++) {
+   alert("checklistid:"+muser.checklists[i]);
+   fetchChecklist(muser.checklists[i], function(checklist) {
+   alert("checklist:"+checklist.checklist_name);
+});
+}
 webix.ui({
   rows:[
     { view:"template", type:"header", template:"Sharedchecklist"},
