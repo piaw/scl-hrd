@@ -1,0 +1,95 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<link rel="stylesheet" href="http://cdn.webix.com/edge/webix.css" type="text/css"> 
+<script src="http://cdn.webix.com/edge/webix.js" type="text/javascript"></script>  
+</head>
+<script src="https://www.gstatic.com/firebasejs/3.4.0/firebase.js"></script>
+<script src="https://www.gstatic.com/firebasejs/3.4.1/firebase.js"></script>
+<script src="https://www.gstatic.com/firebasejs/3.4.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/3.4.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/3.4.0/firebase-database.js"></script>
+<script>
+  // Initialize Firebase
+  var config = {
+    apiKey: "AIzaSyCoJ7jvBdsoPURJFGNffXuphimgoQgnmNU",
+    authDomain: "sharedchecklists.firebaseapp.com",
+    databaseURL: "https://sharedchecklists.firebaseio.com",
+  };
+  firebase.initializeApp(config);
+</script>
+
+<script src="//connect.facebook.net/en_US/sdk.js"></script>
+<script>
+var user = "";
+var email = "";
+var muser = null;
+var database = null;
+
+function authcallback() {
+  alert("Email:"+email);
+  database = firebase.database();
+  alert("database acquired:"+database);
+  fetchUser(email.replace(/\./g,','));
+};
+
+function fetchUser(email) {
+  var furef = database.ref('users').child(email).once('value').then(
+     function(snapshot) {
+        alert('database fetch succeeded');
+     	muser = snapshot.val();
+     	alert("User="+muser.email);
+     	alert("checklists:"+muser.checklists.length);
+     });
+}
+
+var provider = new firebase.auth.FacebookAuthProvider();
+provider.addScope('email');
+firebase.auth().signInWithPopup(provider).then(function(result) {
+  // This gives you a Facebook Access Token. You can use it to access the Facebook API.
+  var token = result.credential.accessToken;
+  // The signed-in user info.
+  var user = result.user;
+  // ...
+  parent.user = user;
+  parent.email = user.email;
+  authcallback();
+}).catch(function(error) {
+  // Handle Errors here.
+  var errorCode = error.code;
+  var errorMessage = error.message;
+  // The email of the user's account used.
+  var email = error.email;
+  // The firebase.auth.AuthCredential type that was used.
+  var credential = error.credential;
+  // ...
+   alert("error:"+errorMessage);
+});
+
+
+</script>
+<body>
+<h1>Some day this will work!</h1>
+<script type="text/javascript" charset="utf-8">
+
+function sleep (time) {
+  return new Promise((resolve) => setTimeout(resolve, time));
+}
+
+// Usage!
+sleep(5000).then(() => {
+webix.ui({
+  rows:[
+    { view:"template", type:"header", template:"Sharedchecklist"},
+{ view:"datatable",
+  autoConfig:true,
+  data:{ email: muser.email, checklists: muser.checklists.length
+      } } ] });
+   
+
+})
+</script>
+
+</body>
+
+</html>
