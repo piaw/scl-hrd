@@ -74,7 +74,8 @@ firebase.auth().signInWithPopup(provider).then(function(result) {
 <body>
 <h1>Some day this will work!</h1>
 
-<div id="box" style="width:400px;height:200px;"></div>
+<div id="box" style="width:800px;height:1600px;"></div>
+
 <script type="text/javascript" charset="utf-8">
 
 function sleep (time) {
@@ -92,8 +93,13 @@ for (var i = 0; i < muser.checklists.length; i++) {
    fetchChecklist(muser.checklists[i], function(checklist) {
    if (checklist != null) {
        checklists.push(checklist);
-       tree.add({ value:checklist.checklist_name}, 0);
+       tree.add({ id:checklist.checklist_name, value:checklist.checklist_name}, 0);
+       var data_constructor = [];
+       for (var j = 0; j < checklist.items.length; j++) {
+          tree.add({value:checklist.items[j].label}, 0, checklist.checklist_name);
+       }
        checklist_names.push(checklist.checklist_name);
+       
     }
 });
 }
