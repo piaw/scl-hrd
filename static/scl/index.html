@@ -73,8 +73,7 @@ firebase.auth().signInWithPopup(provider).then(function(result) {
 </script>
 <body>
 <h1>Some day this will work!</h1>
-
-<div id="box" style="width:800px;height:1600px;"></div>
+<div id="box" style="width:800px;height:800px;"></div>
 
 <script type="text/javascript" charset="utf-8">
 
@@ -87,6 +86,51 @@ var checklists = [];
 var tree = new webix.ui({ view:"tree",
    template:"{common.icon()} {common.checkbox()} {common.folder()} #value#", container:"box", data: []});
 
+function findchecklist(cl_name) {
+    for (var i = 0; i < checklists.length; i++) {
+       if (checklists[i].checklist_name == cl_name)
+            return checklists[i];
+    }
+    return null;
+}
+
+function findchecklistitem(cl, label) {
+    for (var i = 0; i < cl.items.length; i++) {
+       if (cl.items[i].label == label)
+          return cl.items[i];
+    }
+    return null;
+}
+
+function checkitem(id) {
+    var cl_parse = id.split(':');
+    var checklist_name = cl_parse[0];
+    var item = cl_parse[1];
+
+    var cl = findchecklist(checklist_name);
+    if (cl == null) {
+      alert("couldn't find checklist:"+checklist_name);
+      return;
+    }
+    var cl_item = findchecklistitem(cl, item);
+    if (cl_item == null) {
+       alert("couldn't find checklist item:"+item);
+       return;
+    }
+
+    if (cl_item.checked && tree.isChecked(id)) {
+       // value of ui corresponds to db, done!
+       return;
+    }
+
+    if (cl_item.checked == false && tree.isChecked(id) == false) {
+       // value of ui corresponds to db, done!
+       return;
+    }
+
+    alert("time o hack the db");
+}
+
 // Usage!
 sleep(5000).then(() => {
 
@@ -95,7 +139,6 @@ for (var i = 0; i < muser.checklists.length; i++) {
    if (checklist != null) {
        checklists.push(checklist);
        tree.add({ id:checklist.checklist_name, value:checklist.checklist_name}, 0);
-       var data_constructor = [];
        for (var j = 0; j < checklist.items.length; j++) {
           tree.add({id:checklist.checklist_name+":"+checklist.items[j].label, value:checklist.items[j].label}, 0, checklist.checklist_name);
           var checked = checklist.items[j].checked;
@@ -108,15 +151,17 @@ for (var i = 0; i < muser.checklists.length; i++) {
     }
 });
 }
+tree.attachEvent("onItemCheck", checkitem);
 
-webix.ui({
+var table = new webix.ui({
   rows:[
-    { view:"template", type:"header", template:"Sharedchecklist"},
-{ view:"datatable",
+    { view:"template", type:"header", template:"Sharedchecklist"     },
+  { view:"datatable",
   autoConfig:true,
   data:{ email: muser.email, checklists: muser.checklists.length
       } } ] });
-   
+
+table.show(true, true);   
 tree.show(true, true);
 
 })
