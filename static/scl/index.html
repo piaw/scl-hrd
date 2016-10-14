@@ -27,19 +27,14 @@ var muser = null;
 var database = null;
 
 function authcallback() {
-  alert("Email:"+email);
   database = firebase.database();
-  alert("database acquired:"+database);
   fetchUser(email.replace(/\./g,','));
 };
 
 function fetchUser(email) {
   var furef = database.ref('users').child(email).once('value').then(
      function(snapshot) {
-        alert('database fetch succeeded');
      	muser = snapshot.val();
-     	alert("User="+muser.email);
-     	alert("checklists:"+muser.checklists.length);
      });
 }
 
@@ -78,20 +73,31 @@ firebase.auth().signInWithPopup(provider).then(function(result) {
 </script>
 <body>
 <h1>Some day this will work!</h1>
+
+<div id="box" style="width:400px;height:200px;"></div>
 <script type="text/javascript" charset="utf-8">
 
 function sleep (time) {
   return new Promise((resolve) => setTimeout(resolve, time));
 }
 
+var checklist_names = [];
+var checklists = [];
+var tree = new webix.ui({ view:"tree", container:"box", data: []});
+
 // Usage!
 sleep(5000).then(() => {
+
 for (var i = 0; i < muser.checklists.length; i++) {
-   alert("checklistid:"+muser.checklists[i]);
    fetchChecklist(muser.checklists[i], function(checklist) {
-   alert("checklist:"+checklist.checklist_name);
+   if (checklist != null) {
+       checklists.push(checklist);
+       tree.add({ value:checklist.checklist_name}, 0);
+       checklist_names.push(checklist.checklist_name);
+    }
 });
 }
+
 webix.ui({
   rows:[
     { view:"template", type:"header", template:"Sharedchecklist"},
@@ -100,6 +106,7 @@ webix.ui({
   data:{ email: muser.email, checklists: muser.checklists.length
       } } ] });
    
+tree.show(true, true);
 
 })
 </script>
