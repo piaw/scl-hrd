@@ -47,6 +47,7 @@ function newchecklist() {
                         firebase.database().ref('checklists').child(new_cl_key).set(new_cl);
                         muser.checklists.push(new_cl.id);
                         firebase.database().ref('users').child(escape_email(email)).set(muser);
+			w.hide();
                        }}},
                     { view:"button", value:"Cancel", on:{"onItemClick": function(id, e) {
                         w.hide(); }}
