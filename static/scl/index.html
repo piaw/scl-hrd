@@ -53,7 +53,7 @@ firebase.auth().signInWithPopup(provider).then(function(result) {
   var token = result.credential.accessToken;
   // The signed-in user info.
   var user = result.user;
-  // ...
+  // scoping rules mean that we need to set the parent user!
   parent.user = user;
   parent.email = user.email;
   authcallback();
@@ -65,7 +65,6 @@ firebase.auth().signInWithPopup(provider).then(function(result) {
   var email = error.email;
   // The firebase.auth.AuthCredential type that was used.
   var credential = error.credential;
-  // ...
    alert("error:"+errorMessage);
 });
 
