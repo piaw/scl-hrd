@@ -25,6 +25,38 @@ var user = "";
 var email = "";
 var muser = null;
 var database = null;
+var w;
+
+function escape_email(string) {
+   return string.replace(/\./g, ',');
+}
+
+function newchecklist() {
+   w = webix.ui({
+    view:"window",
+    body: {
+       view:"form",
+       elements: [ { id:"checklistname", view:"text", label:"Name"},
+                    { margin: 5, cols: [
+                    { view:"button", value:"Save", type:"form", on:{"onItemClick": function (id, e) {
+			var new_cl_name = ($$("checklistname").getValue());
+                        var new_cl = { id:"", checklist_name:new_cl_name, creator:escape_email(email),
+                                       owner:escape_email(email), items:[], acl:[escape_email(email)] };
+                        var new_cl_key = firebase.database().ref('checklists').push().key;
+                        new_cl.id = new_cl_key;
+                        firebase.database().ref('checklists').child(new_cl_key).set(new_cl);
+                        muser.checklists.push(new_cl.id);
+                        firebase.database().ref('users').child(escape_email(email)).set(muser);
+                       }}},
+                    { view:"button", value:"Cancel", on:{"onItemClick": function(id, e) {
+                        w.hide(); }}
+                      } ] } ]
+                  
+    }
+         
+    });
+   w.show();
+}
 
 function authcallback() {
   database = firebase.database();
@@ -107,7 +139,11 @@ function watch_user_checklist() {
    database.ref('users').child(email.replace(/\./g,',')).on('value',
      function(snapshot) {
        for (var i = 0; i < checklist_names.length; i++) {
-          tree.remove(checklist_names[i]);
+          try {
+              tree.remove(checklist_names[i]);
+          } catch(err) {
+             // ignore errors coming from clearing out the tree
+          }
        }
        checklist_names = [];
        checklists = [];
@@ -156,12 +192,16 @@ function add_checklist(cl) {
         tree.remove(cl.checklist_name);
     }
     tree.add({ id:cl.checklist_name, value:cl.checklist_name}, 0);
-    for (var j = 0; j < cl.items.length; j++) {
-        tree.add({id:cl.checklist_name+"/"+cl.items[j].label, value:cl.items[j].label}, 0, cl.checklist_name);
-        var checked = cl.items[j].checked;
-        if (cl.items[j].checked) {
-            tree.checkItem(cl.checklist_name+"/"+cl.items[j].label);
-        }
+    try {
+	for (var j = 0; j < cl.items.length; j++) {
+            tree.add({id:cl.checklist_name+"/"+cl.items[j].label, value:cl.items[j].label}, 0, cl.checklist_name);
+            var checked = cl.items[j].checked;
+            if (cl.items[j].checked) {
+		tree.checkItem(cl.checklist_name+"/"+cl.items[j].label);
+            }
+	}
+    } catch(err) {
+	// in case items is broken
     }
     tree.refresh();
 }
@@ -189,6 +229,7 @@ sleep(5000).then(() => {
 
 })
 </script>
+<button onclick="newchecklist()">New Checklist</button>
 
 </body>
 
