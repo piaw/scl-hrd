@@ -29,6 +29,8 @@ var database = null;
 function authcallback() {
   database = firebase.database();
   fetchUser(email.replace(/\./g,','));
+  var element = document.getElementById("header");
+   element.innerHTML = "Welcome:"+email;
 };
 
 function fetchUser(email) {
@@ -71,7 +73,7 @@ firebase.auth().signInWithPopup(provider).then(function(result) {
 
 </script>
 <body>
-<h1>Some day this will work!</h1>
+<h1 id="header">Shared Checklist</h1>
 <div id="box" style="width:800px;height:800px;"></div>
 
 <script type="text/javascript" charset="utf-8">
@@ -182,15 +184,6 @@ sleep(5000).then(() => {
     refresh_checklists();
     tree.attachEvent("onItemCheck", checkitem);
 
-    var table = new webix.ui({
-	rows:[
-	    { view:"template", type:"header", template:"Sharedchecklist"     },
-	    { view:"datatable",
-	      autoConfig:true,
-	      data:{ email: muser.email, checklists: muser.checklists.length
-		   } } ] });
-
-    table.show(true, true);   
     tree.show(true, true);
     watch_user_checklist();
 
