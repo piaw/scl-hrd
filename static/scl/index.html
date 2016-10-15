@@ -103,7 +103,7 @@ function findchecklistitem(cl, label) {
 }
 
 function checkitem(id) {
-    var cl_parse = id.split(':');
+    var cl_parse = id.split('/');
     var checklist_name = cl_parse[0];
     var item = cl_parse[1];
 
@@ -128,7 +128,12 @@ function checkitem(id) {
        return;
     }
 
-    alert("time o hack the db");
+    if (tree.isChecked(id)) {
+       cl_item.checked = true;
+    } else {
+       cl_item.checked = false;
+    }
+    firebase.database().ref('checklists').child(cl.id).set(cl)
 }
 
 // Usage!
@@ -140,10 +145,10 @@ for (var i = 0; i < muser.checklists.length; i++) {
        checklists.push(checklist);
        tree.add({ id:checklist.checklist_name, value:checklist.checklist_name}, 0);
        for (var j = 0; j < checklist.items.length; j++) {
-          tree.add({id:checklist.checklist_name+":"+checklist.items[j].label, value:checklist.items[j].label}, 0, checklist.checklist_name);
+          tree.add({id:checklist.checklist_name+"/"+checklist.items[j].label, value:checklist.items[j].label}, 0, checklist.checklist_name);
           var checked = checklist.items[j].checked;
           if (checklist.items[j].checked) {
-             tree.checkItem(checklist.checklist_name+":"+checklist.items[j].label);
+             tree.checkItem(checklist.checklist_name+"/"+checklist.items[j].label);
           }
        }
        checklist_names.push(checklist.checklist_name);
