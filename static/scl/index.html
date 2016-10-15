@@ -76,18 +76,18 @@ firebase.auth().signInWithPopup(provider).then(function(result) {
 
 <script type="text/javascript" charset="utf-8">
 
-function sleep (time) {
-  return new Promise((resolve) => setTimeout(resolve, time));
-}
+    function sleep (time) {
+	return new Promise((resolve) => setTimeout(resolve, time));
+    }
 
 var checklist_names = [];
 var checklists = [];
 var tree = new webix.ui({ view:"tree",
-   template:"{common.icon()} {common.checkbox()} {common.folder()} #value#", container:"box", data: []});
+			  template:"{common.icon()} {common.checkbox()} {common.folder()} #value#", container:"box", data: []});
 
 function findchecklist(cl_name) {
     for (var i = 0; i < checklists.length; i++) {
-       if (checklists[i].checklist_name == cl_name)
+	if (checklists[i].checklist_name == cl_name)
             return checklists[i];
     }
     return null;
@@ -95,10 +95,23 @@ function findchecklist(cl_name) {
 
 function findchecklistitem(cl, label) {
     for (var i = 0; i < cl.items.length; i++) {
-       if (cl.items[i].label == label)
-          return cl.items[i];
+	if (cl.items[i].label == label)
+            return cl.items[i];
     }
     return null;
+}
+
+function watch_user_checklist() {
+   database.ref('users').child(email.replace(/\./g,',')).on('value',
+     function(snapshot) {
+       for (var i = 0; i < checklist_names.length; i++) {
+          tree.remove(checklist_names[i]);
+       }
+       checklist_names = [];
+       checklists = [];
+       muser = snapshot.val();
+       refresh_checklists();
+   });
 }
 
 function checkitem(id) {
@@ -108,74 +121,78 @@ function checkitem(id) {
 
     var cl = findchecklist(checklist_name);
     if (cl == null) {
-      alert("couldn't find checklist:"+checklist_name);
-      return;
+	alert("couldn't find checklist:"+checklist_name);
+	return;
     }
     var cl_item = findchecklistitem(cl, item);
     if (cl_item == null) {
-       alert("couldn't find checklist item:"+item);
-       return;
+	alert("couldn't find checklist item:"+item);
+	return;
     }
 
     if (cl_item.checked && tree.isChecked(id)) {
-       // value of ui corresponds to db, done!
-       return;
+	// value of ui corresponds to db, done!
+	return;
     }
 
     if (cl_item.checked == false && tree.isChecked(id) == false) {
-       // value of ui corresponds to db, done!
-       return;
+	// value of ui corresponds to db, done!
+	return;
     }
 
     if (tree.isChecked(id)) {
-       cl_item.checked = true;
+	cl_item.checked = true;
     } else {
-       cl_item.checked = false;
+	cl_item.checked = false;
     }
     firebase.database().ref('checklists').child(cl.id).set(cl)
 }
 
 function add_checklist(cl) {
-      if (cl == null) return;
-      if (tree.getItem(cl.checklist_name) != null) {
-          tree.remove(cl.checklist_name);
-      }
-      tree.add({ id:cl.checklist_name, value:cl.checklist_name}, 0);
-       for (var j = 0; j < cl.items.length; j++) {
-          tree.add({id:cl.checklist_name+"/"+cl.items[j].label, value:cl.items[j].label}, 0, cl.checklist_name);
-          var checked = cl.items[j].checked;
-          if (cl.items[j].checked) {
-             tree.checkItem(cl.checklist_name+"/"+cl.items[j].label);
-          }
-       }
-       tree.refresh();
+    if (cl == null) return;
+    if (tree.getItem(cl.checklist_name) != null) {
+        tree.remove(cl.checklist_name);
+    }
+    tree.add({ id:cl.checklist_name, value:cl.checklist_name}, 0);
+    for (var j = 0; j < cl.items.length; j++) {
+        tree.add({id:cl.checklist_name+"/"+cl.items[j].label, value:cl.items[j].label}, 0, cl.checklist_name);
+        var checked = cl.items[j].checked;
+        if (cl.items[j].checked) {
+            tree.checkItem(cl.checklist_name+"/"+cl.items[j].label);
+        }
+    }
+    tree.refresh();
 }
- 
+
+function refresh_checklists() {
+    for (var i = 0; i < muser.checklists.length; i++) {
+	fetchChecklist(muser.checklists[i], function(checklist) {
+	    if (checklist != null) {
+		checklists.push(checklist);
+		checklist_names.push(checklist.checklist_name);
+		add_checklist(checklist);
+	    }
+	});
+    }
+}
+
 
 // Usage!
 sleep(5000).then(() => {
+    refresh_checklists();
+    tree.attachEvent("onItemCheck", checkitem);
 
-for (var i = 0; i < muser.checklists.length; i++) {
-   fetchChecklist(muser.checklists[i], function(checklist) {
-   if (checklist != null) {
-       checklists.push(checklist);
-       checklist_names.push(checklist.checklist_name);
-       add_checklist(checklist);
-    }
-});
-}
-tree.attachEvent("onItemCheck", checkitem);
+    var table = new webix.ui({
+	rows:[
+	    { view:"template", type:"header", template:"Sharedchecklist"     },
+	    { view:"datatable",
+	      autoConfig:true,
+	      data:{ email: muser.email, checklists: muser.checklists.length
+		   } } ] });
 
-var table = new webix.ui({
-  rows:[
-    { view:"template", type:"header", template:"Sharedchecklist"     },
-  { view:"datatable",
-  autoConfig:true,
-  data:{ email: muser.email, checklists: muser.checklists.length
-      } } ] });
-
-table.show(true, true);   
-tree.show(true, true);
+    table.show(true, true);   
+    tree.show(true, true);
+    watch_user_checklist();
 
 })
 </script>
