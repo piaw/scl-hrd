@@ -120,6 +120,57 @@ var checklists = [];
 var tree = new webix.ui({ view:"tree",
 			  template:"{common.icon()} {common.checkbox()} {common.folder()} #value#", container:"box", data: []});
 
+function add_checklist_item() {
+  var checked = tree.getChecked();
+  var checked_checklists = [];
+  for (var i = 0; i < checked.length; i++) {
+     if (!checked[i].includes("/"))
+	 checked_checklists.push(checked[i]);
+  }
+
+  if (checked_checklists.length != 1) {
+      alert("Wrong number of checklists checked!");
+      return;
+  }
+  var checklist_to_add = null;
+  // else find the checklistid
+  for (var i = 0; i < checklists.length; i++) {
+      if (checklists[i].checklist_name == checked_checklists[0]) {
+	  checklist_to_add = checklists[i];
+	  break;
+      }
+  } 
+    if (checklist_to_add == null) {
+	alert("Checklist to add to not found!");
+	return;
+    }
+
+    w = webix.ui({
+	view:"window",
+	body: {
+	    view:"form",
+	    elements: [ { id:"checklistitem", view:"text", label:"Name"},
+			{ margin: 5, cols: [
+			    { view:"button", value:"OK", type:"form", on:{"onItemClick": function (id, e) {
+				var new_cl_item_label = ($$("checklistitem").getValue());
+				var currTime = (new Date()).getTime();
+				var new_cl_item = { checked:false, label:new_cl_item_label, dateModified:currTime,
+						    dateCreated:currTime, creator:escape_email(email),
+						    deadline:0 };
+				checklist_to_add.items.push(new_cl_item);
+				firebase.database().ref('checklists').child(checklist_to_add.id).set(checklist_to_add);
+				w.hide();
+			    }}},
+			    { view:"button", value:"Cancel", on:{"onItemClick": function(id, e) {
+				w.hide(); }}
+			    } ] } ]
+            
+	}
+        
+    });
+    w.show();
+}
+
 function findchecklist(cl_name) {
     for (var i = 0; i < checklists.length; i++) {
 	if (checklists[i].checklist_name == cl_name)
@@ -231,6 +282,7 @@ sleep(5000).then(() => {
 })
 </script>
 <button onclick="newchecklist()">New Checklist</button>
+<button onclick="add_checklist_item()">+</button>
 
 </body>
 
