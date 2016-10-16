@@ -119,8 +119,7 @@ var checklist_names = [];
 var checklists = [];
 var tree = new webix.ui({ view:"tree",
 			  template:"{common.icon()} {common.checkbox()} {common.folder()} #value#", container:"box", data: []});
-
-function add_checklist_item() {
+function find_checked_checklist() {
   var checked = tree.getChecked();
   var checked_checklists = [];
   for (var i = 0; i < checked.length; i++) {
@@ -130,7 +129,7 @@ function add_checklist_item() {
 
   if (checked_checklists.length != 1) {
       alert("Wrong number of checklists checked!");
-      return;
+      return null;
   }
   var checklist_to_add = null;
   // else find the checklistid
@@ -142,8 +141,14 @@ function add_checklist_item() {
   } 
     if (checklist_to_add == null) {
 	alert("Checklist to add to not found!");
-	return;
+	return null;
     }
+   return checklist_to_add;
+}
+
+function add_checklist_item() {
+  var checklist_to_add = find_checked_checklist();
+    if (checklist_to_add == null) return;
 
     w = webix.ui({
 	view:"window",
@@ -169,6 +174,43 @@ function add_checklist_item() {
         
     });
     w.show();
+}
+
+function share() {
+    var checklist_to_share = find_checked_checklist();
+    if (checklist_to_share == null) return;
+    w = webix.ui({
+	view:"window",
+	body: {
+	    view:"form",
+	    elements: [ { id:"sharetoemail", view:"text", label:"Name"},
+			{ margin: 5, cols: [
+			    { view:"button", value:"OK", type:"form", on:{"onItemClick": function (id, e) {
+				var sharee_email = ($$("sharetoemail").getValue());
+				var furef = firebase.database().ref('users').child(escape_email(sharee_email)).once('value').then(
+				    function(snapshot) {
+					var user = snapshot.val();
+					alert("User e-mail:"+user.email);
+					if (!("email" in user)) {
+					    alert("email: " + sharee_email + "is not a user.");
+					    return;
+					}
+					checklist_to_share.acl.push(escape_email(sharee_email));
+					firebase.database().ref('checklists').child(checklist_to_share.id).set(checklist_to_share);
+					user.checklists.push(checklist_to_share.id);
+					firebase.database().ref('users').child(user.email).set(user);
+				    });
+				w.hide();
+			    }}},
+			    { view:"button", value:"Cancel", on:{"onItemClick": function(id, e) {
+				w.hide(); }}
+			    } ] } ]
+            
+	}
+        
+    });
+    w.show();
+    
 }
 
 function findchecklist(cl_name) {
@@ -211,12 +253,10 @@ function checkitem(id) {
 
     var cl = findchecklist(checklist_name);
     if (cl == null) {
-	alert("couldn't find checklist:"+checklist_name);
 	return;
     }
     var cl_item = findchecklistitem(cl, item);
     if (cl_item == null) {
-	alert("couldn't find checklist item:"+item);
 	return;
     }
 
@@ -283,6 +323,7 @@ sleep(5000).then(() => {
 </script>
 <button onclick="newchecklist()">New Checklist</button>
 <button onclick="add_checklist_item()">+</button>
+<button onclick="share()">Share</button>
 
 </body>
 
