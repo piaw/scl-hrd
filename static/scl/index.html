@@ -66,10 +66,16 @@ function authcallback() {
    element.innerHTML = "Welcome:"+email;
 };
 
-function fetchUser(email) {
-  var furef = database.ref('users').child(email).once('value').then(
+function fetchUser(email_addr) {
+  var furef = database.ref('users').child(email_addr).once('value').then(
      function(snapshot) {
      	muser = snapshot.val();
+	 if (!"email" in muser) {
+	     // user doesn't exist, create account!
+	     muser = { email: email_addr, checklists: [], pending_checklists: [],
+		       isPro: false };
+	     database.ref('users').child(email_addr).set(muser);
+	 }
      });
 }
 
