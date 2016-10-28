@@ -26,7 +26,6 @@ var email = "";
 var muser = null;
 var database = null;
 var w;
-
 function escape_email(string) {
    return string.replace(/\./g, ',');
 }
@@ -67,6 +66,7 @@ function authcallback() {
   fetchUser(email.replace(/\./g,','));
   var element = document.getElementById("header");
    element.innerHTML = "Welcome:"+email;
+     main();
 };
 
 function fetchUser(email_addr) {
@@ -120,14 +120,16 @@ firebase.auth().signInWithPopup(provider).then(function(result) {
 
 <script type="text/javascript" charset="utf-8">
 
+ var checklist_names = [];
+ var checklists = [];
+ var tree = new webix.ui({ view:"tree",
+			   template:"{common.icon()} {common.checkbox()} {common.folder()} #value#", container:"box", data: []});
+
+
     function sleep (time) {
 	return new Promise((resolve) => setTimeout(resolve, time));
     }
 
-var checklist_names = [];
-var checklists = [];
-var tree = new webix.ui({ view:"tree",
-			  template:"{common.icon()} {common.checkbox()} {common.folder()} #value#", container:"box", data: []});
 function find_checked_checklist() {
   var checked = tree.getChecked();
   var checked_checklists = [];
@@ -355,14 +357,14 @@ function refresh_checklists() {
 
 
 // Usage!
-sleep(5000).then(() => {
+function main() {
     refresh_checklists();
     tree.attachEvent("onItemCheck", checkitem);
 
     tree.show(true, true);
     watch_user_checklist();
 
-})
+}
 </script>
 <button onclick="newchecklist()">New Checklist</button>
 <button onclick="add_checklist_item()">+</button>
